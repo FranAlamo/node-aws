@@ -7,51 +7,25 @@ app.get("/", (request, response) => {
 });
 
 app.get("/todos", (request, response) => {
+  const showPending = request.query.showpending;
+
   fs.readFile("./store/todos.json", "utf-8", (err, data) => {
     if (err) {
       return response.status(500).send("Sorry, something went wrong");
     }
     const todos = JSON.parse(data);
-    // Assuming `id` is defined somewhere, otherwise, you need to define it.
-    const todoIndex = findTodoById(todos, id);
-
-    if (todoIndex === -1) {
-      return response.status(404).send("Sorry, not found");
+    if (showPending !== "1") {
+      return response.json({ todos: todos });
+    } else {
+      return response.json({
+        todos: todos.filter((t) => {
+          return t.complete === false;
+        }),
+      });
     }
-    return response.json(todos[todoIndex]);
-  });
-});
-
-app.put("/todos/:id/complete", (request, response) => {
-  const id = request.params.id;
-
-  fs.readFile("./store/todos.json", "utf-8", (err, data) => {
-    if (err) {
-      return response.status(500).send("Sorry, something went wrong");
-    }
-    let todos = JSON.parse(data);
-    const todoIndex = findTodoById(todos, id);
-    if (todoIndex === -1) {
-      return response.status(404).send("Sorry, not found");
-    }
-    todos[todoIndex].complete = true;
-
-    fs.writeFile("./store/todos.json", JSON.stringify(todos), () => {
-      return response.json({ status: "ok" });
-    });
   });
 });
 
 app.listen(3000, () => {
   console.log("Application running on http://localhost:3000");
 });
-
-// Helper function to find the index of a todo by its id
-const findTodoById = (todos, id) => {
-  for (let i = 0; i < todos.length; i++) {
-    if (todos[i].id === parseInt(id)) {
-      return i;
-    }
-  }
-  return -1;
-};
